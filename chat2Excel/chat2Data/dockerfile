@@ -1,0 +1,24 @@
+# 1. 拉取基础系统环境镜像
+FROM ubuntu:22.04
+
+# 2. 设置工作目录
+RUN mkdir -p /home/chat2Data/
+WORKDIR /home/chat2Data/
+
+# 3. 安装curl工具
+RUN apt-get update && apt-get install -y curl && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# 4. 拷贝必要的文件到工作目录
+COPY ./bin/envsubst /usr/bin/
+COPY ./bin/ ./
+COPY ./bin/dependLib/ /usr/lib/
+COPY ./entrypoint.sh ./
+COPY ./bin/chat2DataT.conf ./
+COPY ./bin/www/ ./www/
+
+# 5. 为可执行程序和启动脚本设置可执行权限
+RUN chmod +x ./*
+RUN chmod -x ./chat2DataT.conf
+
+# 6. 设置入口启动命令
+ENTRYPOINT ["/home/chat2Data/entrypoint.sh"]

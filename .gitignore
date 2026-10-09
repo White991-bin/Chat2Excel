@@ -1,0 +1,47 @@
+# 构建产物
+build/
+**/build/
+CMakeLists-backup/
+**/CMakeLists-backup/
+**/bin/
+**/obj/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.dll
+
+# 生成代码
+**/protoCode/
+*.pb.cc
+*.pb.h
+*-odb.cxx
+*-odb.hxx
+*-odb.ixx
+
+# 数据库
+*.db
+*.sqlite
+
+# 备份/临时
+*.keep/
+*.bak
+*.tmp
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 数据/模型
+*.xlsx
+*.pt
+*.pth
+*.ckpt
+*.zip
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,61 @@
+1.(处理) worksheet的odb映射类中存在问题如下：
+    - 没有给fileId创建索引
+    - 没有将fileId设置为该表的外键，以及设置级联删除，即tbl_fileInfo中fileId的文件删除之后，tbl_worksheet表中fileId对应的行要自动删除
+2. (处理)数据库子服务的rpc接口不需要实现，业务层中数据库子服务和AI子服务的代码需要使用TODO注释标记
+3. （处理）FileBusiness::uploadExcelFile
+4. (处理)std::string FileBusiness::uploadSQLiteFile----前端上传SQLite文件之后，网关将上传SQLite文件请求交给文件子服务，文件子服务的接口层的上传SQLite文件响应的方法，
+   需要先从attachment中提取文件的二进制字节流，然后将SQLite的二进制字节流交给FileBusiness::uploadSQLiteFile，该函数内部直接将SQLite的二进制字节流上传到FastDFS服务器中
+
+5. (处理)FileBusiness::downloadSQLiteFile---该方法属于多余，因为Excel文件解析 或 连接SQLite数据库时，将来更新成让Excel解析子服务 以及 数据库子服务 自己通过fileIdInFastDFS
+到FastDFS服务器中下载
+
+6.(处理) message FileListItem {---缺少聊天会话id
+
+7. (处理)修改excel解析子服务
+
+8. (处理)FileBusiness::saveLocalFile--删除
+
+9. (处理)FileBusiness::deleteLocalFile--删除--移动到excel解析子服务中---直接调用操作系统提供的API删除即可
+
+10. （处理）FileBusiness::uploadExcelFile---需要更新流程
+
+11. (处理)FileBusiness::saveWorksheetDataToStorage--多余
+
+12. (处理)FileBusiness::parseTableDataJson该方法貌似没有使用
+
+13. (处理)FileBusiness::calculateTableName：在检测表名有效性时，参考excel解析子服务中如何检测字段名称有效性，因为worksheet的名称可能包含中文，因此对应的表名中也可能包含中文
+
+14. (处理)FileServiceImpl::GetSQLiteFile---返回文件在FastDFS中的文件id，而不是文件路径
+
+15. （处理）FileServerBuilder& setLocalFilePath(const std::string& localFilePath) 和  std::string _localFilePath;该方法用不到
+
+16. (处理)main.cc中，要监控的服务名称单独定义   DEFINE_string(local_file_path, "./files", "本地文件存储路径");不需要
+
+17. (处理)CMake中，不用编译odb映射类文件，odb映射类文件时在data目录下单独编译的
+
+==============================================================================================
+1. 在worksheet的odb映射类中，看到给fileId添加索引的设置，但是没有看到将fileId设置为worksheet映射表的外键以及级联删除的设置，
+你是在worksheetEntity.sql文件中修改了，但是worksheetEntity.sql可能会随时删除，删除之后会通过odb编译odb映射类重新生成，如果
+直接修改worksheetEntity.sql，重新编译生成的worksheetEntity.sql文件中就没有外键以及级联删除的设置。因此你需要再worksheet的
+odb映射类中去添加fileId为worksheet映射表的外键，以及级联删除的约束。
+2. fileService.proto中，获取SQLite文件的请求中文件路径没有修改成文件在FastDFS中的文件id
+3. FileBusiness::uploadExcelFile方法中，需要实现通过Excel解析子服务解析worksheet表数据的代码，保存数据库暂时使用TODO
+   注释代替
+4. FileBusiness::calculateTableName实现有点繁琐，直接检索，不符合的字符将其替换为_
+5. 文件子服务的main.cc的方法中，需要监控的各个服务名称的gflags参数没有单独设置
+6. excelParserService.proto文件中，解析worksheet表数据的rpc请求ParseExcelRequest中的文件路径没有修改为文件在FastDFS中的文件路径
+7. 在excel解析子服务中，ExcelParser::getWorksheetNamesFromData 和 ExcelParser::parseWorksheetFromData中都通过
+文件数据来打开，需要确认该方式OpenXLSX库是否支持doc.open(fileData);OpenXLSX源码位置：/home/dev/workspace/chat2data-tech/libSource/OpenXLSX/OpenXLSX
+如果没有对应的接口，你需要重新设置方案
+8. 文件子服务的CMakeLists.txt文件中的odb映射类编译的相关代码可以删除，因为在编译文件子服务的代码时，我会先将用chat2Data/data目录
+下的CMakeLists.txt文件对所有的odb映射类的代码进行编译，生成的操作MySQL的CURD的C++代码放在chat2Data/data/odb目录中，生成.sql文件中去修改sql代码放在chat2Data/data/sql目录中
+所以不存在文件子服务的CMakeLists.txt文件中的odb映射类编译的相关代码可以删除，文件子服务编译报错的问题
+==============================================================================================
+1. Excel中各个worksheet数据解析的功能在Excel解析子服务中已经实现了，因此你需要在FileBusiness::uploadExcelFile方法中，需要实现
+通过Excel子服务解析各个worksheet数据的方法，通过数据库子服务将worksheet数据保存数据库的代码使用TODO注释
+2. 在文件子服务main.cc的方法中，文件子服务需要监控AI子服务、Excel解析子服务、数据库子服务，需要监控的服务名称我已经通过注释描述了
+你只需要添加对应的gflags参数，并完成main方法内部的设置即可
+3. 我看你阅读完OpenXLSX库的源代码后，发现该库不支持open的方式直接打开内存文件，你现在的做法是将文件直接保存在本地，该种做法有点复杂，
+因为在解析解析之前，需要通过FastDFS下载文件，而FastDFS支持直接将文件下载到本地，你可以看下FastDFS的源码：/home/dev/workspace/chat2data-tech/libSource/cpp-microservice-scaffold/source/fdfs.h 和 fdfs.cc中
+==============================================================================================
+确认odb映射类中外键以及级联关系该如何设置

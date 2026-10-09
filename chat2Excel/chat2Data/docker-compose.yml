@@ -1,0 +1,152 @@
+# 1. 设置网络
+networks:
+  dev-network:
+    external: true
+    name: bite-dev-environment_dev-network
+# 2. 版本配置
+version: '3.8'
+# 3. 定义服务
+services:
+  gateway:
+# 3.1 构建/拉取镜像
+    image: crpi-l2mxiaa0yapq1c5e.cn-chengdu.personal.cr.aliyuncs.com/bite_proj/chat2data-gateway:v1.0
+# 3.2 设置容器名称
+    container_name: gateway-service
+# 3.3 设置环境变量
+    environment:
+      - CONF_NAME=/home/chat2Data/chat2DataT.conf
+      - BIN_NAME=/home/chat2Data/GatewayService
+      - LISTEN_PORT=8000
+      - SVC_SERVICE_NAME=GatewayService
+      - SVC_SERVICE_ADDR=gateway:8000
+# 3.4 设置端口映射
+    ports:
+      - 8000:8000
+# 3.5 重启策略
+    restart: always
+# 3.6 健康检测
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://gateway:8000"]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+# 3.7 网络添加到自定义网络
+    networks:
+      - dev-network
+  user:
+    image: crpi-l2mxiaa0yapq1c5e.cn-chengdu.personal.cr.aliyuncs.com/bite_proj/chat2data-user:v1.0
+    container_name: user-service
+    environment:
+      - CONF_NAME=/home/chat2Data/chat2DataT.conf
+      - BIN_NAME=/home/chat2Data/UserService
+      - LISTEN_PORT=8001
+      - SVC_SERVICE_NAME=UserService
+      - SVC_SERVICE_ADDR=user:8001
+    ports:
+      - 8001:8001
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://user:8001"]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - dev-network
+  notify:
+    image: crpi-l2mxiaa0yapq1c5e.cn-chengdu.personal.cr.aliyuncs.com/bite_proj/chat2data-notify:v1.0
+    container_name: notify-service
+    environment:
+      - CONF_NAME=/home/chat2Data/chat2DataT.conf
+      - BIN_NAME=/home/chat2Data/NotifyService
+      - LISTEN_PORT=8002
+      - SVC_SERVICE_NAME=NotifyService
+      - SVC_SERVICE_ADDR=notify:8002
+    ports:
+      - 8002:8002
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://notify:8002"]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - dev-network
+  excel:
+    image: crpi-l2mxiaa0yapq1c5e.cn-chengdu.personal.cr.aliyuncs.com/bite_proj/chat2data-excel:v1.0
+    container_name: excel-service
+    environment:
+      - CONF_NAME=/home/chat2Data/chat2DataT.conf
+      - BIN_NAME=/home/chat2Data/ExcelParserService
+      - LISTEN_PORT=8003
+      - SVC_SERVICE_NAME=ExcelParserService
+      - SVC_SERVICE_ADDR=excel:8003
+    ports:
+      - 8003:8003
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://excel:8003"]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - dev-network
+  file:
+    image: crpi-l2mxiaa0yapq1c5e.cn-chengdu.personal.cr.aliyuncs.com/bite_proj/chat2data-file:v1.0
+    container_name: file-service
+    environment:
+      - CONF_NAME=/home/chat2Data/chat2DataT.conf
+      - BIN_NAME=/home/chat2Data/FileService
+      - LISTEN_PORT=8004
+      - SVC_SERVICE_NAME=FileService
+      - SVC_SERVICE_ADDR=file:8004
+    ports:
+      - 8004:8004
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://file:8004"]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - dev-network
+  database:
+    image: crpi-l2mxiaa0yapq1c5e.cn-chengdu.personal.cr.aliyuncs.com/bite_proj/chat2data-database:v1.0
+    container_name: database-service
+    environment:
+      - CONF_NAME=/home/chat2Data/chat2DataT.conf
+      - BIN_NAME=/home/chat2Data/dbService
+      - LISTEN_PORT=8005
+      - SVC_SERVICE_NAME=DatabaseService
+      - SVC_SERVICE_ADDR=database:8005
+    ports:
+      - 8005:8005
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://database:8005"]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - dev-network
+  ai:
+    image: crpi-l2mxiaa0yapq1c5e.cn-chengdu.personal.cr.aliyuncs.com/bite_proj/chat2data-ai:v1.0
+    container_name: ai-service
+    environment:
+      - CONF_NAME=/home/chat2Data/chat2DataT.conf
+      - BIN_NAME=/home/chat2Data/AIService
+      - LISTEN_PORT=8006
+      - SVC_SERVICE_NAME=AIService
+      - SVC_SERVICE_ADDR=ai:8006
+      - deepseek_apikey=sk-5a9c284c92e043059c6c7fb1d7646a84
+      - chatgpt_apikey= # 填充你的ChatGPT API Key，注意不能加""
+      - gemini_apikey=AIzaSyAWW0NF_O3wN_Eldu58Bav8FzInonf_rDA
+    ports:
+      - 8006:8006
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://ai:8006"]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - dev-network
